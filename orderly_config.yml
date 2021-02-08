@@ -1,0 +1,98 @@
+database:
+  # NOTE: For historical reasons, this database is called 'source'
+  # rather than 'montagu' because originally orderly supported only
+  # one database
+  source:
+    driver: RPostgres::Postgres
+    args:
+      dbname: montagu
+      user: readonly
+    instances:
+      production:
+        host: production.montagu.dide.ic.ac.uk
+        port: 5432
+        password: $MONTAGU_DB_PASSWORD_PRODUCTION
+      science:
+        host: support.montagu.dide.ic.ac.uk
+        port: 5432
+        password: $MONTAGU_DB_PASSWORD_SCIENCE
+      uat:
+        host: support.montagu.dide.ic.ac.uk
+        port: 15432
+        password: $MONTAGU_DB_PASSWORD_UAT
+      latest:
+        host: support.montagu.dide.ic.ac.uk
+        port: 35432
+        password: $MONTAGU_DB_PASSWORD_SCIENCE
+    default_instance: $MONTAGU_DB_DEFAULT_INSTANCE
+  annex:
+    driver: RPostgres::Postgres
+    args:
+      host: $ANNEX_HOST
+      port: $ANNEX_PORT
+      dbname: montagu
+      user: readonly
+      password: $ANNEX_PASSWORD
+
+fields:
+  requester:
+    required: true
+  author:
+    required: true
+  comment:
+    required: false
+
+# remote:
+#   science:
+#     driver: montagu::montagu_orderlyweb_remote
+#     args:
+#       host: support.montagu.dide.ic.ac.uk
+#       port: 11443
+#       username: $MONTAGU_PORTAL_USERNAME
+#       password: $MONTAGU_PORTAL_PASSWORD
+#     slack_url: $SLACK_URL
+#     teams_url: $TEAMS_URL
+#   production:
+#     driver: montagu::montagu_orderlyweb_remote
+#     args:
+#       host: montagu.vaccineimpact.org
+#       port: 443
+#       username: $MONTAGU_PORTAL_USERNAME
+#       password: $MONTAGU_PORTAL_PASSWORD
+#     primary: true
+#     master_only: true
+#     slack_url: $SLACK_URL
+#     teams_url: $TEAMS_URL
+#   uat:
+#     driver: montagu::montagu_orderlyweb_remote
+#     args:
+#       host: support.montagu.dide.ic.ac.uk
+#       port: 10443
+#       username: $MONTAGU_PORTAL_USERNAME
+#       password: $MONTAGU_PORTAL_PASSWORD
+#     slack_url: $SLACK_URL
+#     teams_url: $TEAMS_URL
+#   latest:
+#     driver: montagu::montagu_orderlyweb_remote
+#     args:
+#       host: support.montagu.dide.ic.ac.uk
+#       port: 12443
+#       username: $MONTAGU_PORTAL_USERNAME
+#       password: $MONTAGU_PORTAL_PASSWORD
+#     slack_url: $SLACK_URL
+#     teams_url: $TEAMS_URL
+# 
+# vault:
+#   addr: https://support.montagu.dide.ic.ac.uk:8200
+
+global_resources:
+  globals
+
+changelog:
+  internal:
+    public: false
+  external:
+    public: true
+
+minimum_orderly_version: 1.0.10
+
