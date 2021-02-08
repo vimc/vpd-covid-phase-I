@@ -6,3 +6,12 @@ Multimodel comparative analysis of disruption scenarios for measles,
 meningococcal A, and yellow fever vaccination in 10 low- and lower middleincome countries](https://www.medrxiv.org/content/10.1101/2021.01.25.21250489v1.full.pdf)
 
 This repository contains the code used to process the burden estimates from each modelling group and produce the figures shown in the manuscript.
+
+
+# orderly
+
+This is an [`orderly`](https://github.com/vimc/orderly) project.  The directories are:
+
+* `src`: create new reports here
+* `archive`: versioed results of running your report
+* `data`: copies of data used in the reports
