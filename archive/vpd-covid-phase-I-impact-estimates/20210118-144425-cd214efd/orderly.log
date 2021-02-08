@@ -1,0 +1,80 @@
+[ name       ]  vpd-covid-phase-I-impact-estimates
+[ id         ]  20210118-144425-cd214efd
+[ id_file    ]  /orderly/runner/id/corncolored_indochinahogdeer
+[ resource   ]  recipe/method0/impact_recipe.csv
+[ start      ]  2021-01-18 14:44:25
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+
+> meta_0 <- vimpact:::get_meta_from_recipe(default_recipe = FALSE, 
++     con = con, recipe = "recipe/method0/impact_recipe.csv")
+
+> meta <- split(meta_0, meta_0$index)
+
+> deaths <- lapply(meta, function(meta1) vimpact:::get_raw_impact_details(con = con, 
++     meta1, burden_outcome = "deaths"))
+
+> deaths <- do.call(rbind, deaths)
+
+> deaths_under5 <- lapply(meta, function(meta1) vimpact:::get_raw_impact_details(con = con, 
++     meta1, burden_outcome = "deaths", is_under5 = TRUE))
+
+> deaths_under5 <- do.call(rbind, deaths_under5)
+
+> deaths_under5 <- deaths_under5 %>% mutate(burden_outcome = "deaths_under5")
+
+> dalys <- lapply(meta, function(meta1) vimpact:::get_raw_impact_details(con = con, 
++     meta1, burden_outcome = "dalys"))
+
+> dalys <- do.call(rbind, dalys)
+
+> dalys_under5 <- lapply(meta, function(meta1) vimpact:::get_raw_impact_details(con = con, 
++     meta1, burden_outcome = "dalys", is_under5 = TRUE))
+
+> dalys_under5 <- do.call(rbind, dalys_under5)
+
+> dalys_under5 <- dalys_under5 %>% mutate(burden_outcome = "dalys_under5")
+
+> dat <- rbind(deaths, deaths_under5, dalys, dalys_under5)
+
+> scenario_description <- DBI::dbGetQuery(con, "SELECT scenario.id, scenario.scenario_description, scenario_description.description\n                                        FROM scenario\n                                        JOIN scenario_description\n                                        ON scenario_description.id = scenario.scenario_description\n                                        WHERE touchstone = $1", 
++     meta_0$touchstone[1])
+
+> meta_0$scenario_description <- scenario_description$description[match(meta_0$scenario, 
++     scenario_description$id)]
+
+> meta_tmp <- meta_0[meta_0$meta_type == "focal", ][c("touchstone", 
++     "disease", "modelling_group", "index", "scenario_type", "scenario_description")]
+
+> dat <- vimpact:::merge_by_common_cols(dat, meta_tmp)
+
+> country_code <- DBI::dbReadTable(con, "country")
+
+> dat$country <- country_code$id[match(dat$country, 
++     country_code$nid)]
+
+> names(dat) <- c("index", "country", "year", "baseline_burden", 
++     "focal_burden", "impact", "burden_outcome", "touchstone", 
++     "disease", "modelling_group", "scenario_type", "scenario_description")
+
+> saveRDS(meta_0, "meta.rds")
+
+> saveRDS(dat, "impact.rds")
+[ end        ]  2021-01-18 14:44:52
+[ elapsed    ]  Ran report in 26.62901 secs
+[ artefact   ]  impact.rds: 68e948cf28bd3393d68b2ab7e718ff32
+[ ...        ]  meta.rds: f02635497840f956cdac640cd90d726d
+[ commit     ]  vpd-covid-phase-I-impact-estimates/20210118-144425-cd214efd
+[ copy       ]
+[ import     ]  vpd-covid-phase-I-impact-estimates:20210118-144425-cd214efd
+[ success    ]  :)
+id:20210118-144425-cd214efd

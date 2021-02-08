@@ -1,0 +1,36 @@
+
+# You must have a script that does something with the data.  This
+# will be a single string and the filename must exist when orderly is
+# run
+script: script.R
+
+
+artefacts:
+  - data:
+      description: impact estimates, and impact calculation db meta information
+      filenames: 
+        - impact.rds
+        - meta.rds
+
+displayname: VPDS-COVID Phase one impact estimate (cross-sectional)
+description: VPDS-COVID Phase one cross-view impact estimates
+
+
+packages:
+  - vimpact
+  - dplyr
+
+sources: ~
+
+resources:
+  - recipe/method0/impact_recipe.csv
+
+
+connection:
+  con: source
+
+
+requester: VIMC
+
+author: Xiang
+

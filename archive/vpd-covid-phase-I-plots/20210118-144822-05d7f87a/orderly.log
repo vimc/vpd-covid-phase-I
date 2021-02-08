@@ -1,0 +1,554 @@
+[ name       ]  vpd-covid-phase-I-plots
+[ id         ]  20210118-144822-05d7f87a
+[ id_file    ]  /orderly/runner/id/slimline_collie
+[ sources    ]  R/figure_functions.R
+[ ...        ]  R/table_functions.R
+[ global     ]  disease_palette.R -> R/disease_palette.R
+[ resource   ]  report.Rmd
+[ depends    ]  vpd-covid-phase-I-impact-estimates@20210118-144425-cd214efd:impact.rds -> impact.rds
+[ start      ]  2021-01-18 14:48:22
+Loading required package: R.oo
+Loading required package: R.methodsS3
+R.methodsS3 v1.8.1 (2020-08-26 16:20:06 UTC) successfully loaded. See ?R.methodsS3 for help.
+R.oo v1.24.0 (2020-08-26 16:11:58 UTC) successfully loaded. See ?R.oo for help.
+
+Attaching package: ‘R.oo’
+
+The following object is masked from ‘package:R.methodsS3’:
+
+    throw
+
+The following objects are masked from ‘package:methods’:
+
+    getClasses, getMethods
+
+The following objects are masked from ‘package:base’:
+
+    attach, detach, load, save
+
+R.utils v2.10.1 (2020-08-26 22:50:31 UTC) successfully loaded. See ?R.utils for help.
+
+Attaching package: ‘R.utils’
+
+The following object is masked from ‘package:utils’:
+
+    timestamp
+
+The following objects are masked from ‘package:base’:
+
+    cat, commandArgs, getOption, inherits, isOpen, nullfile, parse,
+    warnings
+
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: ‘tidyr’
+
+The following object is masked from ‘package:R.utils’:
+
+    extract
+
+
+> R.utils::sourceDirectory("R", modifiedOnly = FALSE)
+
+> d_orig <- readRDS("impact.rds")
+
+> d <- d_orig %>% mutate(year = as.numeric(year), impact = as.numeric(impact), 
++     focal_burden = as.numeric(focal_burden), baseline_burden = as.numeric(baseline_burden)) %>% 
++     group_by(country, year, modelling_group, burden_outcome, 
++         touchstone, disease, scenario_type, scenario_description) %>% 
++     summarise(impact = mean(impact, na.rm = TRUE), baseline_burden = mean(baseline_burden, 
++         na.rm = TRUE), focal_burden = mean(focal_burden, na.rm = TRUE)) %>% 
++     ungroup()
+`summarise()` regrouping output by 'country', 'year', 'modelling_group', 'burden_outcome', 'touchstone', 'disease', 'scenario_type' (override with `.groups` argument)
+
+> d <- d %>% filter(grepl("bau|scenario2|scenario7|scenario8", 
++     scenario_type))
+
+> d <- d %>% mutate(simple_scenario = case_when(grepl("bau", 
++     scenario_type) ~ "BAU", grepl("scenario2", scenario_type) ~ 
++     "Postpone 2020 SIAs -> 2021", grepl("scenario7", scenario_type) ~ 
++     "50% RI", grepl("scenario8", scenario_type) ~ "50% RI, postpone 2020 SIAs -> 2021"))
+
+> d <- d %>% mutate(simple_scenario = factor(simple_scenario, 
++     levels = c("BAU", "50% RI", "Postpone 2020 SIAs -> 2021", 
++         "50% RI, postpone 2020 SIAs -> 2021")))
+
+> d <- d %>% filter(!grepl("portnoy", scenario_type))
+
+> disease_pal <- disease_palette(unique(d$disease))
+
+> scenario_pal <- rev(c("#EA7580", "#14A7B3", "#F7BE9F", 
++     "grey50"))
+
+> d <- d %>% ungroup() %>% mutate(disease = case_when(disease == 
++     "YF" ~ "Yellow fever", disease == "MenA" ~ "Meningitis A", 
++     disease == "Measles" ~ "Measles"))
+
+> p <- vimpact::get_population(con, touchstone_pop = "202005covid", 
++     country_ = unique(d$country))
+touchstone version is not specified. Lateset version is used.
+
+> p <- p %>% rename(population = value) %>% group_by(country, 
++     year, gender) %>% summarise(population = sum(population, 
++     na.rm = TRUE))
+`summarise()` regrouping output by 'country', 'year' (override with `.groups` argument)
+
+> d_pop <- d %>% left_join(p, by = c("year", "country"))
+
+> d_pop <- d_pop %>% mutate(modelling_group_tidy = case_when(modelling_group == 
++     "Cambridge-Trotter" ~ "Cambridge", modelling_group == "KPW-Jackson" ~ 
++     "KP", modelling_group == "LSHTM-Jit" ~ "DynaMICE", modelling_group == 
++     "PSU-Ferrari" ~ "Penn State", modelling_group == "IC-Garske" ~ 
++     "Imperial", modelling_group == "UND-Perkins" ~ "Notre Dame", 
++     modelling_group == "McCarthy-ETH" ~ "IDM", modelling_group == 
++         "McCarthy-NGA" ~ "IDM"))
+
+> d_pop <- d_pop %>% filter(!(country %in% c("ETH", 
++     "UGA") & disease == "Yellow fever"))
+
+> saveRDS(d_pop, "d_pop.rds")
+
+> rmarkdown::render("report.Rmd")
+
+
+processing file: report.Rmd
+  |                                                                              |                                                                      |   0%  |                                                                              |.                                                                     |   2%
+   inline R code fragments
+
+  |                                                                              |..                                                                    |   3%
+label: setup (with options) 
+List of 1
+ $ include: logi FALSE
+
+  |                                                                              |....                                                                  |   5%
+  ordinary text without R code
+
+  |                                                                              |.....                                                                 |   7%
+label: load_data
+  |                                                                              |......                                                                |   8%
+  ordinary text without R code
+
+  |                                                                              |.......                                                               |  10%
+label: deaths_by_year_YF (with options) 
+List of 1
+ $ fig.cap: chr "Deaths per year up to 2030 for Yellow Fever."
+
+  |                                                                              |........                                                              |  12%
+  ordinary text without R code
+
+  |                                                                              |.........                                                             |  13%
+label: deaths_by_year_Measles (with options) 
+List of 1
+ $ fig.cap: chr "Deaths per year up to 2030 for Measles."
+
+  |                                                                              |..........                                                            |  15%
+  ordinary text without R code
+
+  |                                                                              |............                                                          |  17%
+label: deaths_by_year_MeningitisA (with options) 
+List of 1
+ $ fig.cap: chr "Deaths per year up to 2030 for Yellow Fever."
+
+  |                                                                              |.............                                                         |  18%
+  ordinary text without R code
+
+  |                                                                              |..............                                                        |  20%
+label: deaths_by_year_pop_YF (with options) 
+List of 1
+ $ fig.cap: chr "Deaths per 100,000 per year up to 2030 for Yellow Fever."
+
+  |                                                                              |...............                                                       |  22%
+  ordinary text without R code
+
+  |                                                                              |................                                                      |  23%
+label: deaths_by_year_pop_Measles (with options) 
+List of 1
+ $ fig.cap: chr "Deaths per 100,000 per year up to 2030 for Measles."
+
+  |                                                                              |..................                                                    |  25%
+  ordinary text without R code
+
+  |                                                                              |...................                                                   |  27%
+label: deaths_by_year_pop_MeningitisA (with options) 
+List of 1
+ $ fig.cap: chr "Deaths per 100,000 per year up to 2030 for Yellow Fever."
+
+  |                                                                              |....................                                                  |  28%
+  ordinary text without R code
+
+  |                                                                              |.....................                                                 |  30%
+label: deaths_by_year (with options) 
+List of 2
+ $ fig.cap  : chr "Deaths per year up to 2030 for the model averaged predictions for (A) Measles, (B) Meningitis A and (C) Yellow "| __truncated__
+ $ fig.width: num 16
+
+  |                                                                              |......................                                                |  32%
+  ordinary text without R code
+
+  |                                                                              |.......................                                               |  33%
+label: dalys_by_year (with options) 
+List of 2
+ $ fig.cap  : chr "DALYs per year up to 2030 for the model averaged predictions for (A) Measles, (B) Meningitis A and (C) Yellow F"| __truncated__
+ $ fig.width: num 16
+
+  |                                                                              |........................                                              |  35%
+  ordinary text without R code
+
+  |                                                                              |..........................                                            |  37%
+label: deaths_by_year_ribbon (with options) 
+List of 2
+ $ fig.cap  : chr "Deaths per year up to 2030 for the model averaged predictions for (A) Measles, (B) Meningitis A and (C) Yellow "| __truncated__
+ $ fig.width: num 16
+
+  |                                                                              |...........................                                           |  38%
+  ordinary text without R code
+
+  |                                                                              |............................                                          |  40%
+label: dalys_by_year_ribbon (with options) 
+List of 2
+ $ fig.cap  : chr "DALYs per year up to 2030 for the model averaged predictions for (A) Measles, (B) Meningitis A and (C) Yellow F"| __truncated__
+ $ fig.width: num 16
+
+  |                                                                              |.............................                                         |  42%
+  ordinary text without R code
+
+  |                                                                              |..............................                                        |  43%
+label: deaths_by_year_tab
+  |                                                                              |................................                                      |  45%
+  ordinary text without R code
+
+  |                                                                              |.................................                                     |  47%
+label: deaths_per_pop_by_year (with options) 
+List of 1
+ $ fig.cap: chr "Deaths per 100,000 per year up to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow "| __truncated__
+
+  |                                                                              |..................................                                    |  48%
+  ordinary text without R code
+
+  |                                                                              |...................................                                   |  50%
+label: dalys_per_pop_by_year (with options) 
+List of 1
+ $ fig.cap: chr "DALYs per 100,000 per year up to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow F"| __truncated__
+
+  |                                                                              |....................................                                  |  52%
+  ordinary text without R code
+
+  |                                                                              |.....................................                                 |  53%
+label: deaths_per_pop_by_year_ribbon (with options) 
+List of 1
+ $ fig.cap: chr "Deaths per 100,000 per year up to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow "| __truncated__
+
+  |                                                                              |......................................                                |  55%
+  ordinary text without R code
+
+  |                                                                              |........................................                              |  57%
+label: dalys_per_pop_by_year_ribbon (with options) 
+List of 1
+ $ fig.cap: chr "DALYs per 100,000 per year up to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow F"| __truncated__
+
+  |                                                                              |.........................................                             |  58%
+  ordinary text without R code
+
+  |                                                                              |..........................................                            |  60%
+label: excess_deaths_by_country (with options) 
+List of 2
+ $ message: logi FALSE
+ $ fig.cap: chr "Excess deaths per year from 2020 to 2030 for the model averaged predictions for Measles, Meningitis A and Yello"| __truncated__
+
+  |                                                                              |...........................................                           |  62%
+  ordinary text without R code
+
+  |                                                                              |............................................                          |  63%
+label: excess_dalys_by_country (with options) 
+List of 2
+ $ message: logi FALSE
+ $ fig.cap: chr "Excess DALYs per year from 2020 to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow"| __truncated__
+
+  |                                                                              |..............................................                        |  65%
+  ordinary text without R code
+
+  |                                                                              |...............................................                       |  67%
+label: excess_deaths_per_pop_by_country (with options) 
+List of 2
+ $ message: logi FALSE
+ $ fig.cap: chr "Excess deaths per 100,000 population per year from 2020 to 2030 for the model averaged predictions for Measles,"| __truncated__
+
+  |                                                                              |................................................                      |  68%
+  ordinary text without R code
+
+  |                                                                              |.................................................                     |  70%
+label: excess_dalys_per_pop_by_country (with options) 
+List of 2
+ $ message: logi FALSE
+ $ fig.cap: chr "Excess DALYs per 100,000 population per year from 2020 to 2030 for the model averaged predictions for Measles, "| __truncated__
+
+  |                                                                              |..................................................                    |  72%
+  ordinary text without R code
+
+  |                                                                              |...................................................                   |  73%
+label: norm_deaths (with options) 
+List of 2
+ $ message: logi FALSE
+ $ fig.cap: chr "Normalised excess deaths from 2020 to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow Fever."
+
+  |                                                                              |....................................................                  |  75%
+  ordinary text without R code
+
+  |                                                                              |......................................................                |  77%
+label: norm_deaths_per_country (with options) 
+List of 2
+ $ message: logi FALSE
+ $ fig.cap: chr "Normalised excess deaths from 2020 to 2030 for the model averaged predictions for Measles, Meningitis A and Yel"| __truncated__
+
+  |                                                                              |.......................................................               |  78%
+  ordinary text without R code
+
+  |                                                                              |........................................................              |  80%
+label: norm_dalys (with options) 
+List of 2
+ $ message: logi FALSE
+ $ fig.cap: chr "Normalised excess DALYs from 2020 to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow Fever."
+
+  |                                                                              |.........................................................             |  82%
+  ordinary text without R code
+
+  |                                                                              |..........................................................            |  83%
+label: norm_dalys_per_country (with options) 
+List of 2
+ $ message: logi FALSE
+ $ fig.cap: chr "Normalised excess DALYs from 2020 to 2030 for the model averaged predictions for Measles, Meningitis A and Yell"| __truncated__
+
+  |                                                                              |............................................................          |  85%
+  ordinary text without R code
+
+  |                                                                              |.............................................................         |  87%
+label: norm_deaths_2100 (with options) 
+List of 2
+ $ message: logi FALSE
+ $ fig.cap: chr "Normalised excess deaths from 2020 to 2100 for the model averaged predictions for Measles, Meningitis A and Yellow Fever."
+
+  |                                                                              |..............................................................        |  88%
+  ordinary text without R code
+
+  |                                                                              |...............................................................       |  90%
+label: norm_deaths_2100_per_country (with options) 
+List of 2
+ $ message: logi FALSE
+ $ fig.cap: chr "Normalised excess deaths from 2020 to 2100 for the model averaged predictions for Measles, Meningitis A and Yel"| __truncated__
+
+  |                                                                              |................................................................      |  92%
+  ordinary text without R code
+
+  |                                                                              |.................................................................     |  93%
+label: norm_dalys_2100 (with options) 
+List of 2
+ $ message: logi FALSE
+ $ fig.cap: chr "Normalised excess DALYs from 2020 to 2100 for the model averaged predictions for Measles, Meningitis A and Yellow Fever."
+
+  |                                                                              |..................................................................    |  95%
+  ordinary text without R code
+
+  |                                                                              |....................................................................  |  97%
+label: norm_dalys_2100_per_country (with options) 
+List of 2
+ $ message: logi FALSE
+ $ fig.cap: chr "Normalised excess DALYs from 2020 to 2100 for the model averaged predictions for Measles, Meningitis A and Yell"| __truncated__
+
+  |                                                                              |..................................................................... |  98%
+  ordinary text without R code
+
+  |                                                                              |......................................................................| 100%
+label: under_5s_deaths
+
+output file: report.knit.md
+
+/usr/bin/pandoc +RTS -K512m -RTS report.utf8.md --to html4 --from markdown+autolink_bare_uris+tex_math_single_backslash --output report.html --self-contained --standalone --section-divs --template /usr/local/lib/R/site-library/rmarkdown/rmd/h/default.html --no-highlight --variable highlightjs=1 --variable 'theme:bootstrap' --include-in-header /tmp/RtmphHGMDk/rmarkdown-str2f44d270db2.html --mathjax --variable 'mathjax-url:https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML' 
+
+Output created: report.html
+
+> tmp <- table_maker_impact(d_pop, burden_t = "deaths", 
++     year_end = 2030, per_pop = FALSE)
+
+> write.csv(tmp, "excess_deaths_2020_2030.csv", row.names = FALSE)
+
+> tmp <- table_maker_impact(d_pop, burden_t = "deaths_under5", 
++     year_end = 2030, per_pop = FALSE)
+
+> write.csv(tmp, "excess_deaths_under5_2020_2030.csv", 
++     row.names = FALSE)
+
+> tmp <- table_maker_impact(d_pop, burden_t = "deaths", 
++     year_end = 2030, per_pop = TRUE)
+
+> write.csv(tmp, "excess_deaths_per_pop_2020_2030.csv", 
++     row.names = FALSE)
+
+> tmp <- table_maker_impact(d_pop, burden_t = "dalys", 
++     year_end = 2030, per_pop = FALSE)
+
+> write.csv(tmp, "excess_dalys_2020_2030.csv", row.names = FALSE)
+
+> tmp <- table_maker_impact(d_pop, burden_t = "dalys_under5", 
++     year_end = 2030, per_pop = FALSE)
+
+> write.csv(tmp, "excess_dalys_under5_2020_2030.csv", 
++     row.names = FALSE)
+
+> tmp <- table_maker_impact(d_pop, burden_t = "dalys", 
++     year_end = 2030, per_pop = TRUE)
+
+> write.csv(tmp, "excess_dalys_per_pop_2020_2030.csv", 
++     row.names = FALSE)
+
+> lapply(unique(d_pop$disease), FUN = function(x) {
++     table_maker_impact_per_dis_country(d_pop, dis_name = x, year_end = 2030, 
++         "deaths", per_pop = TRUE) %>% write.csv(paste0("excess_deaths_per_pop_", 
++         x, "_country_2000_2030.csv"), row.names = FALSE)
++ })
+[[1]]
+NULL
+
+[[2]]
+NULL
+
+[[3]]
+NULL
+
+
+> lapply(unique(d_pop$disease), FUN = function(x) {
++     table_maker_impact_per_dis_country(d_pop, dis_name = x, year_end = 2030, 
++         "deaths", per_pop = FALSE) %>% write.csv(paste0("excess_deaths_", 
++         x, "_country_2000_2030.csv"), row.names = FALSE)
++ })
+[[1]]
+NULL
+
+[[2]]
+NULL
+
+[[3]]
+NULL
+
+
+> lapply(unique(d_pop$disease), FUN = function(x) {
++     table_maker_impact_per_dis_year(d_pop, dis_name = x, year_end = 2030, 
++         "deaths", per_pop = TRUE) %>% write.csv(paste0("excess_deaths_per_pop_", 
++         x, "_year_2000_2030.csv"), row.names = FALSE)
++ })
+[[1]]
+NULL
+
+[[2]]
+NULL
+
+[[3]]
+NULL
+
+
+> lapply(unique(d_pop$disease), FUN = function(x) {
++     table_maker_impact_per_dis_year(d_pop, dis_name = x, year_end = 2030, 
++         "deaths", per_pop = FALSE) %>% write.csv(paste0("excess_deaths_", 
++         x, "_year_2000_2030.csv"), row.names = FALSE)
++ })
+[[1]]
+NULL
+
+[[2]]
+NULL
+
+[[3]]
+NULL
+
+
+> tmp <- table_maker_percent_change(d_pop, burden_t = "deaths", 
++     year_end = 2030)
+
+> write.csv(tmp, "percent_change_deaths_2020_2030.csv", 
++     row.names = FALSE)
+
+> tmp <- table_maker_percent_change(d_pop, burden_t = "dalys", 
++     year_end = 2030)
+
+> write.csv(tmp, "percent_change_dalys_2020_2030.csv", 
++     row.names = FALSE)
+
+> tmp <- table_maker_percent_change_all(d_pop, burden_t = "deaths", 
++     year_end = 2030)
+
+> write.csv(tmp, "percent_change_deaths_all_2020_2030.csv", 
++     row.names = FALSE)
+
+> tmp <- table_maker_percent_change_all(d_pop, burden_t = "dalys", 
++     year_end = 2030)
+
+> write.csv(tmp, "percent_change_dalys_all_2020_2030.csv", 
++     row.names = FALSE)
+[ end        ]  2021-01-18 14:49:15
+[ elapsed    ]  Ran report in 52.91036 secs
+[ unexpected ]  d_pop.rds
+[ artefact   ]  report.html: 23688bc8833d695b309e522e863eb7e1
+[ ...        ]  figures/deaths_by_year-1.png: 3067d579be5faa11ac5da661579aa908
+[ ...        ]  figures/dalys_by_year-1.png: f0ed3dd390ad1c5040ff5aff209cf630
+[ ...        ]  figures/deaths_per_pop_by_year-1.png: 26331f319d54c82577c899eb86d102ae
+[ ...        ]  figures/dalys_per_pop_by_year-1.png: 7edd433facd45645c1de7bef55f8e702
+[ ...        ]  figures/excess_dalys_by_country-1.png: 0bd6844e634acac0f7cb8a1adc92ef40
+[ ...        ]  figures/excess_deaths_by_country-1.png: 7c3b4c06e7451a81e51dcc63f351e268
+[ ...        ]  figures/excess_dalys_per_pop_by_country-1.png: 4fc5fea55c70ce482a80596078e34762
+[ ...        ]  figures/excess_deaths_per_pop_by_country-1.png: 59d16f92353b64a95b83950e2e4fddfb
+[ ...        ]  figures/norm_dalys-1.png: cd57a4288fe8cfe7f8aa51b4dce714de
+[ ...        ]  figures/norm_dalys_2100-1.png: 8d8b29a0ea24ad98c9509d19b4f210a8
+[ ...        ]  figures/norm_deaths-1.png: e9605c314022f51ce95dfcb9fd4f4f59
+[ ...        ]  figures/norm_deaths_2100-1.png: 1ef64a9ed5108cec33ed847a2fe16462
+[ ...        ]  figures/norm_dalys_per_country-1.png: a3066e1cb3692cc233ac6ba582a21977
+[ ...        ]  figures/norm_dalys_2100_per_country-1.png: 860254059d67f8ca55ed9ee0f92d6493
+[ ...        ]  figures/norm_deaths_per_country-1.png: 8d1a1576c1af5cc80d6f911fc3aca7f7
+[ ...        ]  figures/norm_deaths_2100_per_country-1.png: a5e5baec489dad51d13a15073a8d9c1a
+[ ...        ]  figures/deaths_by_year_Measles-1.png: 233d7b2081c02374f1cea593fa36c268
+[ ...        ]  figures/deaths_by_year_MeningitisA-1.png: 01719aa6dfae35309b1a6a2f85b65d1f
+[ ...        ]  figures/deaths_by_year_pop_Measles-1.png: cae4ee3ccbce30a69c376e7b7c8af16b
+[ ...        ]  figures/deaths_by_year_pop_MeningitisA-1.png: 9038c19d6063cfd618c194cfb2af8fb2
+[ ...        ]  figures/deaths_by_year_pop_YF-1.png: 36422660b3e578d47cbee9cad0a0ecaf
+[ ...        ]  figures/deaths_by_year_YF-1.png: d88cabcc1c9abfec6750b6132af732f9
+[ ...        ]  figures/dalys_by_year_ribbon-1.png: f679cd027fa52211b6ec6b2aa6f9e81e
+[ ...        ]  figures/dalys_per_pop_by_year_ribbon-1.png: e97cb12ed94a628e5cd7fcedaf229a56
+[ ...        ]  figures/deaths_by_year_ribbon-1.png: dd7b26dc661a8ea19cb4928ffb669d0e
+[ ...        ]  figures/deaths_per_pop_by_year_ribbon-1.png: a60b33b19c0f485e32665ca3c4d405b8
+[ ...        ]  figures/under_5s_deaths-1.png: 0934bc8b9c483c2a3399c9bd91ed2cf4
+[ ...        ]  excess_deaths_2020_2030.csv: 0ac8b992d121f0f0e1e5307d77dd4d83
+[ ...        ]  excess_dalys_2020_2030.csv: ed550ea093030f7949952c5dbe1179ce
+[ ...        ]  excess_deaths_under5_2020_2030.csv: b27136a280d80fdec3971f38e1a50755
+[ ...        ]  excess_dalys_under5_2020_2030.csv: 91fe5ef7330512e959ea9c9140628e00
+[ ...        ]  excess_dalys_per_pop_2020_2030.csv: 12876cab1648a90e825c5ba1f14e8a78
+[ ...        ]  excess_deaths_Measles_country_2000_2030.csv: 84863d6e2f0b0513584750c15d6f2a27
+[ ...        ]  excess_deaths_Measles_year_2000_2030.csv: de39d317699a8d4ccead35a2075c28f6
+[ ...        ]  excess_deaths_Meningitis A_country_2000_2030.csv: 3730aeebe9f39fd5f50b08da2872bee2
+[ ...        ]  excess_deaths_Meningitis A_year_2000_2030.csv: a67455fbe7647882f308b64599bf3a7d
+[ ...        ]  excess_deaths_per_pop_2020_2030.csv: 5f038b0d5daef0715a37cd1b2eead150
+[ ...        ]  excess_deaths_per_pop_Measles_country_2000_2030.csv: b31418e2626821379fc4e41ba81f0342
+[ ...        ]  excess_deaths_per_pop_Measles_year_2000_2030.csv: 53a8afdfd90f017be110e83bf41a7f17
+[ ...        ]  excess_deaths_per_pop_Meningitis A_country_2000_2030.csv: aa872a237c3fcd2aa70692019ba2aa9e
+[ ...        ]  excess_deaths_per_pop_Meningitis A_year_2000_2030.csv: cc07f69f4ce21d3cdc76863af89541c0
+[ ...        ]  excess_deaths_per_pop_Yellow fever_country_2000_2030.csv: 0e54fec03b013e53122fe7ee2537ace5
+[ ...        ]  excess_deaths_per_pop_Yellow fever_year_2000_2030.csv: 878087365dc296440b1456b635162cf5
+[ ...        ]  excess_deaths_Yellow fever_country_2000_2030.csv: c8c4f6ea6b7f93e8fd6f3561cbba3502
+[ ...        ]  excess_deaths_Yellow fever_year_2000_2030.csv: f98880ba8ecd19f611a895048560c3ff
+[ ...        ]  percent_change_deaths_2020_2030.csv: 70cac866ed1ad8295c7206b1227976e8
+[ ...        ]  percent_change_dalys_2020_2030.csv: 724dabfc53beb7debba67fc136140295
+[ ...        ]  percent_change_deaths_all_2020_2030.csv: e09af2fd59aae9a6822475cea210bedd
+[ ...        ]  percent_change_dalys_all_2020_2030.csv: c2b08d1cd01b09a1fed5e7f65194c837
+[ commit     ]  vpd-covid-phase-I-plots/20210118-144822-05d7f87a
+[ copy       ]
+[ import     ]  vpd-covid-phase-I-plots:20210118-144822-05d7f87a
+[ success    ]  :)
+id:20210118-144822-05d7f87a
+There were 45 warnings (use warnings() to see them)

@@ -1,0 +1,252 @@
+---
+title: "VPD-COVID phase I figures"
+author: "Katy Gaythorpe"
+date: "`r format(Sys.Date(), '%d %m %y')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      dev = "png",
+                      fig.height = 10,
+                      fig.width = 12,
+                      fig.path = "figures/",
+                      message = FALSE,
+                      warning = FALSE)
+
+options(dplyr.summarise.inform = FALSE)
+
+
+
+```
+
+This report is constructed purely to produce figures for the VPD-COVID phase I modelling work. 
+
+```{r load_data}
+d_pop <- readRDS("d_pop.rds")
+
+```
+
+
+
+```{r deaths_by_year_YF, fig.cap="Deaths per year up to 2030 for Yellow Fever." }
+
+figure_maker_burden_per_mod_dis(d_pop, burden_t = "deaths", scenario_pal, 
+                                            year_end = 2030, dis_name = "Yellow fever")
+
+```
+
+```{r deaths_by_year_Measles, fig.cap="Deaths per year up to 2030 for Measles."  }
+
+figure_maker_burden_per_mod_dis(d_pop, burden_t = "deaths", scenario_pal, 
+                                            year_end = 2030, dis_name = "Measles")
+
+```
+
+```{r deaths_by_year_MeningitisA, fig.cap="Deaths per year up to 2030 for Yellow Fever."  }
+
+figure_maker_burden_per_mod_dis(d_pop, burden_t = "deaths", scenario_pal, 
+                                            year_end = 2030, dis_name = "Meningitis A")
+
+```
+
+
+```{r deaths_by_year_pop_YF, fig.cap="Deaths per 100,000 per year up to 2030 for Yellow Fever." }
+
+figure_maker_burden_per_mod_dis_pop(d_pop, burden_t = "deaths", scenario_pal, 
+                                            year_end = 2030, dis_name = "Yellow fever")
+
+```
+
+```{r deaths_by_year_pop_Measles, fig.cap="Deaths per 100,000 per year up to 2030 for Measles." }
+
+figure_maker_burden_per_mod_dis_pop(d_pop, burden_t = "deaths", scenario_pal, 
+                                            year_end = 2030, dis_name = "Measles")
+
+```
+
+```{r deaths_by_year_pop_MeningitisA, fig.cap="Deaths per 100,000 per year up to 2030 for Yellow Fever." }
+
+figure_maker_burden_per_mod_dis_pop(d_pop, burden_t = "deaths", scenario_pal, 
+                                            year_end = 2030, dis_name = "Meningitis A")
+
+```
+
+
+
+```{r deaths_by_year, fig.cap="Deaths per year up to 2030 for the model averaged predictions for (A) Measles, (B) Meningitis A and (C) Yellow Fever. Dotted lines indicate each modelling group whereas the solid line represents the mean.", fig.width=16 }
+
+figure_maker_burden(d_pop, burden_t = "deaths", scenario_pal)
+
+```
+
+
+
+```{r dalys_by_year, fig.cap="DALYs per year up to 2030 for the model averaged predictions for (A) Measles, (B) Meningitis A and (C) Yellow Fever. Dotted lines indicate each modelling group whereas the solid line represents the mean.", fig.width=16 }
+
+figure_maker_burden(d_pop, burden_t = "dalys", scenario_pal)
+
+```
+
+
+```{r deaths_by_year_ribbon, fig.cap="Deaths per year up to 2030 for the model averaged predictions for (A) Measles, (B) Meningitis A and (C) Yellow Fever. Grey ribbon represents the envelope of all model predictions - this should not be interpreted as uncertainty.", fig.width=16 }
+
+figure_maker_burden_ribbon(d_pop, burden_t = "deaths", scenario_pal)
+
+```
+
+
+
+```{r dalys_by_year_ribbon, fig.cap="DALYs per year up to 2030 for the model averaged predictions for (A) Measles, (B) Meningitis A and (C) Yellow Fever.  Grey ribbon represents the envelope of all model predictions - this should not be interpreted as uncertainty.", fig.width=16 }
+
+figure_maker_burden_ribbon(d_pop, burden_t = "dalys", scenario_pal)
+
+```
+
+```{r deaths_by_year_tab}
+d_burden <-
+    d_pop %>%
+    filter(burden_outcome == "deaths") %>%
+    filter(year %in% c(2020, 2030)) %>%
+    group_by(country, year, modelling_group, simple_scenario, disease) %>%
+    summarise(value = sum(focal_burden, na.rm = TRUE)) %>%
+    bind_rows(d %>% 
+                filter(burden_outcome == "deaths", 
+                       simple_scenario == "Postpone 2020 SIAs -> 2021", 
+                       year %in% c(2020, 2030)) %>%
+                group_by(country, year, disease, modelling_group) %>%
+                summarise(value = sum(baseline_burden, na.rm = TRUE)) %>%
+                mutate(simple_scenario = "BAU"))
+
+d_burden %>% 
+  filter(country == "NGA") %>%
+  arrange(year, disease) %>%
+  mutate(value = round(value)) %>%
+  pivot_wider(names_from = simple_scenario,
+              values_from = value) %>% 
+  flextable::flextable(cwidth = 1.5)
+
+
+```
+
+
+```{r deaths_per_pop_by_year, fig.cap="Deaths per 100,000 per year up to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow Fever. Dotted lines indicate each modelling group whereas the solid line represents the mean." }
+
+figure_maker_burden_pop(d_pop, burden_t = "deaths", scenario_pal)
+
+```
+
+
+
+```{r dalys_per_pop_by_year, fig.cap="DALYs per 100,000 per year up to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow Fever. Dotted lines indicate each modelling group whereas the solid line represents the mean." }
+
+figure_maker_burden_pop(d_pop, burden_t = "dalys", scenario_pal)
+
+```
+
+
+```{r deaths_per_pop_by_year_ribbon, fig.cap="Deaths per 100,000 per year up to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow Fever. Grey ribbon represents the envelope of all model predictions - this should not be interpreted as uncertainty." }
+
+figure_maker_burden_per_pop_ribbon(d_pop, burden_t = "deaths", scenario_pal)
+
+```
+
+
+
+```{r dalys_per_pop_by_year_ribbon, fig.cap="DALYs per 100,000 per year up to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow Fever. Grey ribbon represents the envelope of all model predictions - this should not be interpreted as uncertainty." }
+
+figure_maker_burden_per_pop_ribbon(d_pop, burden_t = "dalys", scenario_pal)
+
+```
+
+# Effect by country
+
+```{r excess_deaths_by_country,   message=FALSE,  fig.cap="Excess deaths per year from 2020 to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow Fever by country. The error bars range from max to min group preditions."}
+
+figure_maker_excess_country(d_pop, "deaths", scenario_pal)
+
+```
+
+
+```{r excess_dalys_by_country,  message=FALSE,  fig.cap="Excess DALYs per year from 2020 to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow Fever by country. The error bars range from max to min group preditions."}
+figure_maker_excess_country(d_pop, "dalys",  scenario_pal)
+```
+
+```{r excess_deaths_per_pop_by_country,   message=FALSE,  fig.cap="Excess deaths per 100,000 population per year from 2020 to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow Fever by country.The error bars range from max to min group preditions."}
+
+figure_maker_excess_country_pop(d_pop, "deaths", scenario_pal)
+
+```
+
+
+```{r excess_dalys_per_pop_by_country,  message=FALSE,  fig.cap="Excess DALYs per 100,000 population per year from 2020 to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow Fever by country.The error bars range from max to min group preditions."}
+figure_maker_excess_country_pop(d_pop, "dalys",  scenario_pal)
+```
+
+
+
+# Normalised impact
+
+```{r norm_deaths,   message=FALSE,  fig.cap="Normalised excess deaths from 2020 to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow Fever."}
+figure_maker_norm(d_pop, "deaths", scenario_pal)
+```
+
+
+```{r norm_deaths_per_country,   message=FALSE,  fig.cap="Normalised excess deaths from 2020 to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow Fever per country"}
+figure_maker_norm_per_country(d_pop, "deaths", scenario_pal)
+```
+
+
+
+```{r norm_dalys,  message=FALSE,  fig.cap="Normalised excess DALYs from 2020 to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow Fever."}
+figure_maker_norm(d_pop, "dalys", scenario_pal)
+
+```
+
+```{r norm_dalys_per_country,  message=FALSE,  fig.cap="Normalised excess DALYs from 2020 to 2030 for the model averaged predictions for Measles, Meningitis A and Yellow Fever per country"}
+figure_maker_norm_per_country(d_pop, "dalys", scenario_pal)
+```
+
+```{r norm_deaths_2100,   message=FALSE,  fig.cap="Normalised excess deaths from 2020 to 2100 for the model averaged predictions for Measles, Meningitis A and Yellow Fever."}
+figure_maker_norm(d_pop, "deaths", scenario_pal, year_end = 2100)
+
+```
+
+```{r norm_deaths_2100_per_country,   message=FALSE,  fig.cap="Normalised excess deaths from 2020 to 2100 for the model averaged predictions for Measles, Meningitis A and Yellow Fever per country"}
+figure_maker_norm_per_country(d_pop, "deaths", scenario_pal, year_end = 2100)
+```
+
+
+```{r norm_dalys_2100,  message=FALSE,  fig.cap="Normalised excess DALYs from 2020 to 2100 for the model averaged predictions for Measles, Meningitis A and Yellow Fever."}
+figure_maker_norm(d_pop, "dalys", scenario_pal, year_end = 2100)
+
+```
+
+
+```{r norm_dalys_2100_per_country,  message=FALSE,  fig.cap="Normalised excess DALYs from 2020 to 2100 for the model averaged predictions for Measles, Meningitis A and Yellow Fever per country"}
+figure_maker_norm_per_country(d_pop, "dalys", scenario_pal, year_end = 2100)
+```
+
+# Adding under 5 burden
+```{r under_5s_deaths}
+d_pop %>%
+  filter(year<=2030)  %>%
+  filter(grepl("deaths", burden_outcome)) %>%
+  mutate(under5 = ifelse(grepl("under5", burden_outcome),
+                         "<5",
+                         "All ages")) %>%
+  group_by(modelling_group_tidy, simple_scenario, disease, under5) %>%
+  summarise(Excess = -sum(impact, na.rm = TRUE)) %>%
+  mutate(Excess = round(Excess)) %>%
+  mutate(disease = factor(disease, levels = rev(c("Measles", "Meningitis A", "Yellow fever")))) %>%
+  mutate(mod_grp_dis = paste0(disease, ", ",modelling_group_tidy)) %>%
+  
+  ggplot()+
+  geom_col(position = "dodge", color = "black")+
+  aes(x = mod_grp_dis, y = Excess, fill = under5)+
+  coord_flip()+
+  facet_wrap(simple_scenario~., nrow = 2, scales = "free_y")+
+  theme_minimal()+
+  scale_fill_manual(values = c("black", "white"))+
+  labs(y = "Excess deaths", x = "", fill = "Age" )
+```
