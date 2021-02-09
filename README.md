@@ -18,4 +18,4 @@ This is an [`orderly`](https://github.com/vimc/orderly) project.  The directorie
 
 ## Running the reports
 
-Running the reports is unfortunately not possible as running reqires access to a PostGress database which contains sensitive information. However, all report running inputs and outputs are contained within the archive folder.
+Running the reports is unfortunately not possible as running requires access to a PostgreSQL database which contains sensitive information. However, all report running inputs and outputs are contained within the archive folder.
