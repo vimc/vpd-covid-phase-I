@@ -1,0 +1,538 @@
+[ git        ]  pull
+[ name       ]  vpd-covid-phase-I-plots
+[ id         ]  20210426-083944-509f3460
+[ id_file    ]  /orderly/runner/id/unsanitary_merganser.id_file
+[ sources    ]  R/figure_functions.R
+[ ...        ]  R/table_functions.R
+[ global     ]  disease_palette.R -> R/disease_palette.R
+[ resource   ]  country_names.csv
+[ depends    ]  vpd-covid-phase-I-impact-estimates@20210118-144425-cd214efd:impact.rds -> impact.rds
+[ start      ]  2021-04-26 08:39:44
+Loading required package: R.oo
+Loading required package: R.methodsS3
+R.methodsS3 v1.8.1 (2020-08-26 16:20:06 UTC) successfully loaded. See ?R.methodsS3 for help.
+R.oo v1.24.0 (2020-08-26 16:11:58 UTC) successfully loaded. See ?R.oo for help.
+
+Attaching package: ‘R.oo’
+
+The following object is masked from ‘package:R.methodsS3’:
+
+    throw
+
+The following objects are masked from ‘package:methods’:
+
+    getClasses, getMethods
+
+The following objects are masked from ‘package:base’:
+
+    attach, detach, load, save
+
+R.utils v2.10.1 (2020-08-26 22:50:31 UTC) successfully loaded. See ?R.utils for help.
+
+Attaching package: ‘R.utils’
+
+The following object is masked from ‘package:utils’:
+
+    timestamp
+
+The following objects are masked from ‘package:base’:
+
+    cat, commandArgs, getOption, inherits, isOpen, nullfile, parse,
+    warnings
+
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: ‘tidyr’
+
+The following object is masked from ‘package:R.utils’:
+
+    extract
+
+
+> R.utils::sourceDirectory("R", modifiedOnly = FALSE)
+
+> options(dplyr.summarise.inform = FALSE)
+
+> d_orig <- readRDS("impact.rds")
+
+> country_names <- read.csv("country_names.csv", stringsAsFactors = FALSE)
+
+> d <- d_orig %>% mutate(year = as.numeric(year), impact = as.numeric(impact), 
++     focal_burden = as.numeric(focal_burden), baseline_burden = as.numeric(baseline_burden)) %>% 
++     group_by(country, year, modelling_group, burden_outcome, 
++         touchstone, disease, scenario_type, scenario_description) %>% 
++     summarise(impact = mean(impact, na.rm = TRUE), baseline_burden = mean(baseline_burden, 
++         na.rm = TRUE), focal_burden = mean(focal_burden, na.rm = TRUE)) %>% 
++     ungroup()
+
+> d <- d %>% filter(grepl("bau|scenario2|scenario7|scenario8", 
++     scenario_type))
+
+> d <- d %>% mutate(simple_scenario = case_when(grepl("bau", 
++     scenario_type) ~ "Business as usual", grepl("scenario2", 
++     scenario_type) ~ "Postpone 2020 SIAs until 2021", grepl("scenario7", 
++     scenario_type) ~ "50% reduction in RI", grepl("scenario8", 
++     scenario_type) ~ "50% reduction in RI, postpone 2020 SIAs until 2021"))
+
+> d <- d %>% mutate(simple_scenario = factor(simple_scenario, 
++     levels = c("Business as usual", "Postpone 2020 SIAs until 2021", 
++         "50% reduction in RI", "50% reduction in RI, postpone 2020 SIAs until 2021")))
+
+> d <- d %>% filter(!grepl("portnoy", scenario_type))
+
+> disease_pal <- disease_palette(unique(d$disease))
+
+> scenario_pal <- rev(c("#EA7580", "#14A7B3", "#F7BE9F", 
++     "grey50"))
+
+> d <- d %>% ungroup() %>% mutate(disease = case_when(disease == 
++     "YF" ~ "Yellow fever", disease == "MenA" ~ "Meningitis A", 
++     disease == "Measles" ~ "Measles"))
+
+> p <- vimpact::get_population(con, touchstone_pop = "202005covid", 
++     country_ = unique(d$country))
+touchstone version is not specified. Lateset version is used.
+
+> p <- p %>% rename(population = value) %>% group_by(country, 
++     year, gender) %>% summarise(population = sum(population, 
++     na.rm = TRUE))
+
+> d_pop <- d %>% left_join(p, by = c("year", "country"))
+
+> d_pop <- d_pop %>% mutate(modelling_group_tidy = case_when(modelling_group == 
++     "Cambridge-Trotter" ~ "Cambridge", modelling_group == "KPW-Jackson" ~ 
++     "KP", modelling_group == "LSHTM-Jit" ~ "DynaMICE", modelling_group == 
++     "PSU-Ferrari" ~ "Penn State", modelling_group == "IC-Garske" ~ 
++     "Imperial", modelling_group == "UND-Perkins" ~ "Notre Dame", 
++     modelling_group == "McCarthy-ETH" ~ "IDM", modelling_group == 
++         "McCarthy-NGA" ~ "IDM"))
+
+> d_pop <- d_pop %>% filter(!(country %in% c("ETH", 
++     "UGA") & disease == "Yellow fever"))
+
+> d_pop <- d_pop %>% mutate(country_name = country_names$country_name[match(country, 
++     country_names$country)])
+
+> p1 <- figure_maker_burden_per_mod_dis(d_pop, burden_t = "deaths", 
++     scenario_pal, year_end = 2030, dis_name = "Yellow fever", 
++     file_name = "deaths_by_year_YF", figheight = 10, figwidth = 16)
+
+> p2 <- figure_maker_burden_per_mod_dis(d_pop, burden_t = "deaths", 
++     scenario_pal, year_end = 2030, dis_name = "Meningitis A", 
++     file_name = "deaths_by_year_MeningitisA", figheight = 10, 
++     figwidth = 16)
+
+> p3 <- figure_maker_burden_per_mod_dis(d_pop, burden_t = "deaths", 
++     scenario_pal, year_end = 2030, dis_name = "Measles", file_name = "deaths_by_year_Measles", 
++     figheight = 10, figwidth = 16)
+
+> leg <- get_legend(p3)
+
+> p4 <- cowplot::plot_grid(NULL, p3 + theme(legend.position = "none"), 
++     p2 + theme(legend.position = "none"), p1 + theme(legend.position = "none"), 
++     leg, ncol = 1, rel_heights = c(0.1, 1, 1, 1, 0.1), labels = c("", 
++         "Measles", "Meningitis A", "Yellow Fever"), hjust = -0.1, 
++     vjust = 0.1)
+
+> ggsave(plot = p4, filename = "deaths_by_year_all.png", 
++     height = 12, width = 16)
+
+> p1 <- figure_maker_burden_per_mod_dis(d_pop, burden_t = "deaths_under5", 
++     scenario_pal, year_end = 2030, dis_name = "Yellow fever", 
++     file_name = "deaths_by_year_YF_under5", figheight = 10, figwidth = 16)
+
+> p2 <- figure_maker_burden_per_mod_dis(d_pop, burden_t = "deaths", 
++     scenario_pal, year_end = 2030, dis_name = "Meningitis A", 
++     file_name = "deaths_by_year_MeningitisA_under5", figheight = 10, 
++     figwidth = 16)
+
+> p3 <- figure_maker_burden_per_mod_dis(d_pop, burden_t = "deaths_under5", 
++     scenario_pal, year_end = 2030, dis_name = "Measles", file_name = "deaths_by_year_Measles_under5", 
++     figheight = 10, figwidth = 16)
+
+> leg <- get_legend(p3)
+
+> p4 <- cowplot::plot_grid(NULL, p3 + theme(legend.position = "none"), 
++     p2 + theme(legend.position = "none"), p1 + theme(legend.position = "none"), 
++     leg, ncol = 1, rel_heights = c(0.1, 1, 1, 1, 0.1), labels = c("", 
++         "Measles", "Meningitis A", "Yellow Fever"), hjust = -0.1, 
++     vjust = 0.1)
+
+> ggsave(plot = p4, filename = "deaths_by_year_all_under5.png", 
++     height = 12, width = 16)
+
+> p1 <- figure_maker_burden_per_mod_dis_pop(d_pop, burden_t = "deaths", 
++     scenario_pal, year_end = 2030, dis_name = "Yellow fever", 
++     file_name = "deaths_by_year_pop_YF", figheight = 10, figwidth = 12)
+
+> p2 <- figure_maker_burden_per_mod_dis_pop(d_pop, burden_t = "deaths", 
++     scenario_pal, year_end = 2030, dis_name = "Meningitis A", 
++     file_name = "deaths_by_year_pop_MeningitisA", figheight = 10, 
++     figwidth = 12)
+
+> p3 <- figure_maker_burden_per_mod_dis_pop(d_pop, burden_t = "deaths", 
++     scenario_pal, year_end = 2030, dis_name = "Measles", file_name = "deaths_by_year_pop_Measles", 
++     figheight = 10, figwidth = 12)
+
+> leg <- get_legend(p3)
+
+> p4 <- cowplot::plot_grid(NULL, p3 + theme(legend.position = "none"), 
++     p2 + theme(legend.position = "none"), p1 + theme(legend.position = "none"), 
++     leg, ncol = 1, rel_heights = c(0.1, 1, 1, 1, 0.1), labels = c("", 
++         "Measles", "Meningitis A", "Yellow Fever"), hjust = -0.1, 
++     vjust = 0.1)
+
+> ggsave(plot = p4, filename = "deaths_by_year_pop_all.png", 
++     height = 12, width = 16)
+
+> p1 <- figure_maker_excess_timeline_per_disease_mod(d_pop, 
++     burden_t = "deaths", scenario_pal, year_end = 2030, dis_name = "Yellow fever", 
++     file_name = "excess_deaths_by_year_YF", figheight = 10, figwidth = 12)
+
+> p2 <- figure_maker_excess_timeline_per_disease_mod(d_pop, 
++     burden_t = "deaths", scenario_pal, year_end = 2030, dis_name = "Meningitis A", 
++     file_name = "excess_deaths_by_year_MeningitisA", figheight = 10, 
++     figwidth = 12)
+
+> p3 <- figure_maker_excess_timeline_per_disease_mod(d_pop, 
++     burden_t = "deaths", scenario_pal, year_end = 2030, dis_name = "Measles", 
++     file_name = "excess_deaths_by_year_Measles", figheight = 10, 
++     figwidth = 12)
+
+> leg <- get_legend(p3)
+
+> p4 <- cowplot::plot_grid(NULL, p3 + theme(legend.position = "none"), 
++     p2 + theme(legend.position = "none"), p1 + theme(legend.position = "none"), 
++     leg, ncol = 1, rel_heights = c(0.1, 1, 1, 1, 0.1), labels = c("", 
++         "Measles", "Meningitis A", "Yellow Fever"), hjust = -0.1, 
++     vjust = 0.1)
+
+> ggsave(plot = p4, filename = "excess_deaths_by_year_all.png", 
++     height = 12, width = 16)
+
+> p1 <- figure_maker_burden_per_mod_dis_pop(d_pop, burden_t = "deaths", 
++     scenario_pal, year_end = 2030, dis_name = "Yellow fever", 
++     file_name = "deaths_by_year_pop_YF", figheight = 10, figwidth = 12)
+
+> p2 <- figure_maker_burden_per_mod_dis_pop(d_pop, burden_t = "deaths", 
++     scenario_pal, year_end = 2030, dis_name = "Meningitis A", 
++     file_name = "deaths_by_year_pop_MeningitisA", figheight = 10, 
++     figwidth = 12)
+
+> p3 <- figure_maker_burden_per_mod_dis_pop(d_pop, burden_t = "deaths", 
++     scenario_pal, year_end = 2030, dis_name = "Measles", file_name = "deaths_by_year_pop_Measles", 
++     figheight = 10, figwidth = 12)
+
+> leg <- get_legend(p3)
+
+> p4 <- cowplot::plot_grid(NULL, p3 + theme(legend.position = "none"), 
++     p2 + theme(legend.position = "none"), p1 + theme(legend.position = "none"), 
++     leg, ncol = 1, rel_heights = c(0.1, 1, 1, 1, 0.1), labels = c("", 
++         "Measles", "Meningitis A", "Yellow Fever"), hjust = -0.1, 
++     vjust = 0.1)
+
+> ggsave(plot = p4, filename = "deaths_by_year_pop_all.png", 
++     height = 12, width = 16)
+
+> p1 <- figure_maker_excess_timeline_per_disease_mod(d_pop, 
++     burden_t = "deaths_under5", scenario_pal, year_end = 2030, 
++     dis_name = "Yellow fever", file_name = "excess_deaths_by_year_YF_under5", 
++     figheight = 10, figwidth = 12)
+
+> p2 <- figure_maker_excess_timeline_per_disease_mod(d_pop, 
++     burden_t = "deaths_under5", scenario_pal, year_end = 2030, 
++     dis_name = "Meningitis A", file_name = "excess_deaths_by_year_MeningitisA_under5", 
++     figheight = 10, figwidth = 12)
+
+> p3 <- figure_maker_excess_timeline_per_disease_mod(d_pop, 
++     burden_t = "deaths_under5", scenario_pal, year_end = 2030, 
++     dis_name = "Measles", file_name = "excess_deaths_by_year_Measles_under5", 
++     figheight = 10, figwidth = 12)
+
+> leg <- get_legend(p3)
+
+> p4 <- cowplot::plot_grid(NULL, p3 + theme(legend.position = "none"), 
++     p2 + theme(legend.position = "none"), p1 + theme(legend.position = "none"), 
++     leg, ncol = 1, rel_heights = c(0.1, 1, 1, 1, 0.1), labels = c("", 
++         "Measles", "Meningitis A", "Yellow Fever"), hjust = -0.1, 
++     vjust = 0.1)
+
+> ggsave(plot = p4, filename = "excess_deaths_by_year_all_under5.png", 
++     height = 12, width = 16)
+
+> p1 <- figure_maker_survival_timeline_per_disease_mod(d_pop, 
++     burden_t = "deaths", scenario_pal, year_end = 2030, dis_name = "Yellow fever", 
++     file_name = "survival_change_by_year_YF", figheight = 10, 
++     figwidth = 12)
+
+> p2 <- figure_maker_survival_timeline_per_disease_mod(d_pop, 
++     burden_t = "deaths", scenario_pal, year_end = 2030, dis_name = "Meningitis A", 
++     file_name = "survival_change_by_year_MeningitisA", figheight = 10, 
++     figwidth = 12)
+
+> p3 <- figure_maker_survival_timeline_per_disease_mod(d_pop, 
++     burden_t = "deaths", scenario_pal, year_end = 2030, dis_name = "Measles", 
++     file_name = "survival_change_by_year_Measles", figheight = 10, 
++     figwidth = 12)
+
+> leg <- get_legend(p3)
+
+> p4 <- cowplot::plot_grid(NULL, p3 + theme(legend.position = "none"), 
++     p2 + theme(legend.position = "none"), p1 + theme(legend.position = "none"), 
++     leg, ncol = 1, rel_heights = c(0.1, 1, 1, 1, 0.1), labels = c("", 
++         "Measles", "Meningitis A", "Yellow Fever"), hjust = -0.1, 
++     vjust = 0.1)
+
+> ggsave(plot = p4, filename = "survival_change_by_year_all.png", 
++     height = 12, width = 16)
+
+> figure_maker_burden_ribbon(d_pop, burden_t = "deaths", 
++     scenario_pal, file_name = "deaths_by_year_ribbon", figheight = 10, 
++     figwidth = 16)
+
+> figure_maker_burden_ribbon(d_pop, burden_t = "dalys", 
++     scenario_pal, file_name = "dalys_by_year_ribbon", figheight = 10, 
++     figwidth = 16)
+
+> figure_maker_burden_per_pop_ribbon(d_pop, burden_t = "deaths", 
++     scenario_pal, file_name = "deaths_per_pop_by_year_ribbon", 
++     figheight = 10, figwidth = 16)
+
+> figure_maker_burden_per_pop_ribbon(d_pop, burden_t = "dalys", 
++     scenario_pal, file_name = "dalys_per_pop_by_year_ribbon", 
++     figheight = 10, figwidth = 16)
+
+> figure_maker_excess_country_pop(d_pop, "deaths", scenario_pal, 
++     file_name = "excess_deaths_per_pop_by_country", figheight = 10, 
++     figwidth = 16)
+
+> figure_maker_excess_country_pop(d_pop, "dalys", scenario_pal, 
++     file_name = "excess_dalys_per_pop_by_country", figheight = 10, 
++     figwidth = 16)
+
+> p1 <- figure_maker_norm_per_country_dis(d_pop, "deaths", 
++     dis_name = "Yellow fever", scenario_pal, file_name = "norm_deaths_per_country_YF", 
++     figwidth = 16, figheight = 10)
+
+> p2 <- figure_maker_norm_per_country_dis(d_pop, "deaths", 
++     dis_name = "Meningitis A", scenario_pal, file_name = "norm_deaths_per_country_MenA", 
++     figwidth = 16, figheight = 10)
+
+> p3 <- figure_maker_norm_per_country_dis(d_pop, "deaths", 
++     dis_name = "Measles", scenario_pal, file_name = "norm_deaths_per_country_Measles", 
++     figwidth = 16, figheight = 10)
+
+> leg <- get_legend(p3)
+
+> shape_leg <- get_legend(figure_maker_norm_per_country_dis(d_pop, 
++     "deaths", dis_name = "Measles", scenario_pal, file_name = "norm_deaths_per_country_Measles", 
++     figwidth = 16, figheight = 10, shape_leg = TRUE))
+
+> p4 <- cowplot::plot_grid(NULL, p3 + theme(legend.position = "none"), 
++     p2 + theme(legend.position = "none"), p1 + theme(legend.position = "none"), 
++     leg, shape_leg, ncol = 1, rel_heights = c(0.1, 1, 1, 1, 0.1, 
++         0.1), labels = c("", "Measles", "Meningitis A", "Yellow Fever"), 
++     hjust = -0.1, vjust = 0.1)
+
+> ggsave(plot = p4, filename = "norm_deaths_per_country.png", 
++     height = 12, width = 16)
+
+> figure_maker_under5(d_pop)
+
+> tmp <- table_maker_impact(d_pop, burden_t = "deaths", 
++     year_end = 2030, per_pop = FALSE)
+
+> write.csv(tmp, "excess_deaths_2020_2030.csv", row.names = FALSE)
+
+> tmp <- table_maker_impact(d_pop, burden_t = "deaths_under5", 
++     year_end = 2030, per_pop = FALSE)
+
+> write.csv(tmp, "excess_deaths_under5_2020_2030.csv", 
++     row.names = FALSE)
+
+> tmp <- table_maker_impact(d_pop, burden_t = "deaths", 
++     year_end = 2030, per_pop = TRUE)
+
+> write.csv(tmp, "excess_deaths_per_pop_2020_2030.csv", 
++     row.names = FALSE)
+
+> tmp <- table_maker_impact(d_pop, burden_t = "dalys", 
++     year_end = 2030, per_pop = FALSE)
+
+> write.csv(tmp, "excess_dalys_2020_2030.csv", row.names = FALSE)
+
+> tmp <- table_maker_impact(d_pop, burden_t = "dalys_under5", 
++     year_end = 2030, per_pop = FALSE)
+
+> write.csv(tmp, "excess_dalys_under5_2020_2030.csv", 
++     row.names = FALSE)
+
+> tmp <- table_maker_impact(d_pop, burden_t = "dalys", 
++     year_end = 2030, per_pop = TRUE)
+
+> write.csv(tmp, "excess_dalys_per_pop_2020_2030.csv", 
++     row.names = FALSE)
+
+> lapply(unique(d_pop$disease), FUN = function(x) {
++     table_maker_impact_per_dis_country(d_pop, dis_name = x, year_end = 2030, 
++         "deaths", per_pop = TRUE) %>% write.csv(paste0("excess_deaths_per_pop_", 
++         x, "_country_2000_2030.csv"), row.names = FALSE)
++ })
+[[1]]
+NULL
+
+[[2]]
+NULL
+
+[[3]]
+NULL
+
+
+> lapply(unique(d_pop$disease), FUN = function(x) {
++     table_maker_impact_per_dis_country(d_pop, dis_name = x, year_end = 2030, 
++         "deaths", per_pop = FALSE) %>% write.csv(paste0("excess_deaths_", 
++         x, "_country_2000_2030.csv"), row.names = FALSE)
++ })
+[[1]]
+NULL
+
+[[2]]
+NULL
+
+[[3]]
+NULL
+
+
+> lapply(unique(d_pop$disease), FUN = function(x) {
++     table_maker_impact_per_dis_year(d_pop, dis_name = x, year_end = 2030, 
++         "deaths", per_pop = TRUE) %>% write.csv(paste0("excess_deaths_per_pop_", 
++         x, "_year_2000_2030.csv"), row.names = FALSE)
++ })
+[[1]]
+NULL
+
+[[2]]
+NULL
+
+[[3]]
+NULL
+
+
+> lapply(unique(d_pop$disease), FUN = function(x) {
++     table_maker_impact_per_dis_year(d_pop, dis_name = x, year_end = 2030, 
++         "deaths", per_pop = FALSE) %>% write.csv(paste0("excess_deaths_", 
++         x, "_year_2000_2030.csv"), row.names = FALSE)
++ })
+[[1]]
+NULL
+
+[[2]]
+NULL
+
+[[3]]
+NULL
+
+
+> tmp <- table_maker_percent_change(d_pop, burden_t = "deaths", 
++     year_end = 2030)
+
+> write.csv(tmp, "percent_change_deaths_2020_2030.csv", 
++     row.names = FALSE)
+
+> tmp <- table_maker_percent_change(d_pop, burden_t = "dalys", 
++     year_end = 2030)
+
+> write.csv(tmp, "percent_change_dalys_2020_2030.csv", 
++     row.names = FALSE)
+
+> tmp <- table_maker_percent_change_all(d_pop, burden_t = "deaths", 
++     year_end = 2030)
+
+> write.csv(tmp, "percent_change_deaths_all_2020_2030.csv", 
++     row.names = FALSE)
+
+> tmp <- table_maker_percent_change_all(d_pop, burden_t = "dalys", 
++     year_end = 2030)
+
+> write.csv(tmp, "percent_change_dalys_all_2020_2030.csv", 
++     row.names = FALSE)
+
+> dev.off()
+null device 
+          1 
+[ end        ]  2021-04-26 08:40:45
+[ elapsed    ]  Ran report in 1.01596 mins
+[ unexpected ]  Rplots.pdf
+[ artefact   ]  dalys_by_year_ribbon-1.png: df1aae0e02201ed19958218de9432bbc
+[ ...        ]  dalys_per_pop_by_year_ribbon-1.png: c2f234021b9e6b01b542a77cdb7dbdd7
+[ ...        ]  deaths_by_year_Measles-1.png: 5a91b902836b830214a2d773dd67df90
+[ ...        ]  deaths_by_year_MeningitisA-1.png: 3c4c8548a45f5930565f401498028b38
+[ ...        ]  deaths_by_year_pop_Measles-1.png: 5b1a679e4ecea4fde13988c3414a68ff
+[ ...        ]  deaths_by_year_pop_MeningitisA-1.png: f535e995b4a334802ae1a8ecbbc32049
+[ ...        ]  deaths_by_year_pop_YF-1.png: 6b8a9f58dbc1d7f5c9cca9fa1b98bf07
+[ ...        ]  deaths_by_year_ribbon-1.png: 70904466d88264200951acfd9409c1c3
+[ ...        ]  deaths_by_year_YF-1.png: 0433b6ec3e3eb795f587b7ec8e142b86
+[ ...        ]  deaths_per_pop_by_year_ribbon-1.png: 0850b7d76e64126bbdff2899b02e07cf
+[ ...        ]  excess_deaths_per_pop_by_country-1.png: 408855c8b16ff9674b7234e85f81a038
+[ ...        ]  excess_dalys_per_pop_by_country-1.png: 4e348a268639764b0164a44bbfbb2b68
+[ ...        ]  under_5s_deaths-1.png: 2821ead1f40e93a2ce2ea96c81fa7bd2
+[ ...        ]  deaths_by_year_all.png: 7840144b88b94684531bc678f0220089
+[ ...        ]  deaths_by_year_pop_all.png: 2d0bd4962b4f9e164bbf6644f7edfe7a
+[ ...        ]  excess_deaths_by_year_all.png: 2ea7dc1053c062414ba9ad742623d32d
+[ ...        ]  excess_deaths_by_year_Measles-1.png: 065a05cec2e96091b75cae0209b7d5f2
+[ ...        ]  excess_deaths_by_year_MeningitisA-1.png: d72694c67b59d073e96c301ec98279f7
+[ ...        ]  excess_deaths_by_year_YF-1.png: 79477f944ae84be0819a3ff0cbb17edf
+[ ...        ]  survival_change_by_year_all.png: a441722cca1d96286c0cf21670cb7a1f
+[ ...        ]  survival_change_by_year_Measles-1.png: 82ea0043524f4a3396c41469f2af10b6
+[ ...        ]  survival_change_by_year_MeningitisA-1.png: e0296980262812704a119c88a651e4e3
+[ ...        ]  survival_change_by_year_YF-1.png: 8e70ae76267cbef0e793f90886c33f95
+[ ...        ]  deaths_by_year_all_under5.png: 9300b8afc0c12c8b074f656e78b6a89e
+[ ...        ]  deaths_by_year_Measles_under5-1.png: ed01a8f2f9c593f3e8fc063abc962273
+[ ...        ]  deaths_by_year_MeningitisA_under5-1.png: 3c4c8548a45f5930565f401498028b38
+[ ...        ]  deaths_by_year_YF_under5-1.png: 7a070204ce7c975a00c1f30282cf9efb
+[ ...        ]  excess_deaths_by_year_all_under5.png: 9dec4f706b68aebdbce2233e9bd76bbf
+[ ...        ]  excess_deaths_by_year_Measles_under5-1.png: 6678a87a19fa9e77a755e5d07274bb1c
+[ ...        ]  excess_deaths_by_year_MeningitisA_under5-1.png: 7983c62afc2b7094e02ec483334b70f7
+[ ...        ]  excess_deaths_by_year_YF_under5-1.png: 766ad40e9fd78a2c59efcf80796af783
+[ ...        ]  norm_deaths_per_country.png: 824e04a0bad157132df28b3b208f2109
+[ ...        ]  norm_deaths_per_country_Measles-1.png: 15a595b98a1b539fe857061a26d868a1
+[ ...        ]  norm_deaths_per_country_MenA-1.png: 5f556568b31b3427748e16567f6e10ad
+[ ...        ]  norm_deaths_per_country_YF-1.png: 2d470640e9e04533271f57a515bc6886
+[ ...        ]  excess_deaths_2020_2030.csv: c89d1ba3abc8c2750b878a0ce198a5db
+[ ...        ]  excess_dalys_2020_2030.csv: 2ee54196ad728d2416643211717ab148
+[ ...        ]  excess_deaths_under5_2020_2030.csv: 70b7883e83eda847d1b1ecf2d0c9f43a
+[ ...        ]  excess_dalys_under5_2020_2030.csv: e8a6a73f28ddbd1fac86ff60202dc841
+[ ...        ]  excess_dalys_per_pop_2020_2030.csv: e15311741c911b7fc9f3c426c053cd19
+[ ...        ]  excess_deaths_Measles_country_2000_2030.csv: 489aecda6c5972ef4242b0bdbc197e2f
+[ ...        ]  excess_deaths_Measles_year_2000_2030.csv: 57cbd937aeca02cbfed20432895d82ba
+[ ...        ]  excess_deaths_Meningitis A_country_2000_2030.csv: c99d0d4c96fa4be8849db9cfd054c2cb
+[ ...        ]  excess_deaths_Meningitis A_year_2000_2030.csv: 36776080b78def0684ab8c87843e8ebf
+[ ...        ]  excess_deaths_per_pop_2020_2030.csv: 0c7ca94242f7701ac386046b5c603c0e
+[ ...        ]  excess_deaths_per_pop_Measles_country_2000_2030.csv: e5c062181ea8d4385ed5d0bfd3442842
+[ ...        ]  excess_deaths_per_pop_Measles_year_2000_2030.csv: 899319f82e8dcdc20afd1ccec6bc95fa
+[ ...        ]  excess_deaths_per_pop_Meningitis A_country_2000_2030.csv: 96b79d76e31ee27e3a19e270a07fa410
+[ ...        ]  excess_deaths_per_pop_Meningitis A_year_2000_2030.csv: 9a7959d63bf3c471fe122c9a850d0fad
+[ ...        ]  excess_deaths_per_pop_Yellow fever_country_2000_2030.csv: 5a9558a98fcb39a333d92907a32bb285
+[ ...        ]  excess_deaths_per_pop_Yellow fever_year_2000_2030.csv: 0679e066753d7469e68aa1a2eb07aaa1
+[ ...        ]  excess_deaths_Yellow fever_country_2000_2030.csv: f829cb8500dead93a55c717098ddc4f6
+[ ...        ]  excess_deaths_Yellow fever_year_2000_2030.csv: 44eaea2096fade82dd167721aeded39f
+[ ...        ]  percent_change_deaths_2020_2030.csv: ebefdcb977a7703ddac907393710a14d
+[ ...        ]  percent_change_dalys_2020_2030.csv: ebefdcb977a7703ddac907393710a14d
+[ ...        ]  percent_change_deaths_all_2020_2030.csv: d1a5fc8edd6c40c07fe560b741277634
+[ ...        ]  percent_change_dalys_all_2020_2030.csv: ea2028db9869758d45f2be36f66daeba
+[ commit     ]  vpd-covid-phase-I-plots/20210426-083944-509f3460
+[ copy       ]
+[ import     ]  vpd-covid-phase-I-plots:20210426-083944-509f3460
+[ success    ]  :)
+id:20210426-083944-509f3460
+There were 17 warnings (use warnings() to see them)
