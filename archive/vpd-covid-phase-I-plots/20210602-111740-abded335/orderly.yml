@@ -1,0 +1,132 @@
+requester: VIMC
+author: Katy
+
+displayname: VPD-COVID phase I figures
+
+connection:
+  con: source
+
+data: ~
+
+packages: 
+ - jenner
+ - R.utils
+ - ggplot2
+ - dplyr
+ - tidyr
+ - vimpact
+ - cowplot
+
+script: script.R
+
+artefacts: 
+ - staticgraph:
+      description: All figures
+      filenames: 
+       - deaths_by_year_Measles-1.png
+       - deaths_by_year_MeningitisA-1.png
+       - deaths_by_year_YF-1.png
+       
+       - deaths_by_year_pop_Measles-1.png
+       - deaths_by_year_pop_MeningitisA-1.png
+       - deaths_by_year_pop_YF-1.png
+       
+       - dalys_by_year_pop_Measles-1.png
+       - dalys_by_year_pop_MeningitisA-1.png
+       - dalys_by_year_pop_YF-1.png
+       
+       - dalys_by_year_Measles-1.png
+       - dalys_by_year_MeningitisA-1.png
+       - dalys_by_year_YF-1.png
+       - dalys_by_year_all.png
+       
+       - excess_deaths_per_pop_by_country-1.png
+       - excess_dalys_per_pop_by_country-1.png
+       
+       - under_5s_deaths-1.png
+       
+       - deaths_by_year_all.png
+       - deaths_by_year_pop_all.png
+       - dalys_by_year_pop_all.png
+       
+       - excess_deaths_by_year_all.png
+       - excess_deaths_by_year_Measles-1.png
+       - excess_deaths_by_year_MeningitisA-1.png
+       - excess_deaths_by_year_YF-1.png
+       
+       - survival_change_by_year_all.png
+       - survival_change_by_year_Measles-1.png
+       - survival_change_by_year_MeningitisA-1.png
+       - survival_change_by_year_YF-1.png
+       
+       - deaths_by_year_all_under5.png
+       - deaths_by_year_Measles_under5-1.png
+       - deaths_by_year_MeningitisA_under5-1.png
+       - deaths_by_year_YF_under5-1.png
+       
+       - excess_deaths_by_year_all_under5.png
+       - excess_deaths_by_year_Measles_under5-1.png
+       - excess_deaths_by_year_MeningitisA_under5-1.png
+       - excess_deaths_by_year_YF_under5-1.png
+       
+       - norm_deaths_per_country.png
+       - norm_deaths_per_country_Measles-1.png
+       - norm_deaths_per_country_MenA-1.png
+       - norm_deaths_per_country_YF-1.png
+       
+       - norm_dalys_per_country.png
+       - norm_dalys_per_country_Measles-1.png
+       - norm_dalys_per_country_MenA-1.png
+       - norm_dalys_per_country_YF-1.png
+       
+       - excess_dalys_per_country_mod.png   
+       - excess_dalys_per_country_mod_Measles-1.png   
+       - excess_dalys_per_country_mod_MenA-1.png   
+       - excess_dalys_per_country_mod_YF-1.png   
+       - excess_deaths_per_country_mod.png   
+       - excess_deaths_per_country_mod_Measles-1.png   
+       - excess_deaths_per_country_mod_MenA-1.png   
+       - excess_deaths_per_country_mod_YF-1.png
+     
+ - data:
+      description: All tables
+      filenames:
+       - excess_deaths_2020_2030.csv
+       - excess_dalys_2020_2030.csv
+       - excess_deaths_under5_2020_2030.csv
+       - excess_dalys_under5_2020_2030.csv
+       - excess_dalys_per_pop_2020_2030.csv
+       - excess_deaths_Measles_country_2000_2030.csv
+       - excess_deaths_Measles_year_2000_2030.csv
+       - excess_deaths_Meningitis A_country_2000_2030.csv
+       - excess_deaths_Meningitis A_year_2000_2030.csv
+       - excess_deaths_per_pop_2020_2030.csv
+       - excess_deaths_per_pop_Measles_country_2000_2030.csv
+       - excess_deaths_per_pop_Measles_year_2000_2030.csv
+       - excess_deaths_per_pop_Meningitis A_country_2000_2030.csv
+       - excess_deaths_per_pop_Meningitis A_year_2000_2030.csv
+       - excess_deaths_per_pop_Yellow fever_country_2000_2030.csv
+       - excess_deaths_per_pop_Yellow fever_year_2000_2030.csv
+       - excess_deaths_Yellow fever_country_2000_2030.csv
+       - excess_deaths_Yellow fever_year_2000_2030.csv
+       - percent_change_deaths_2020_2030.csv
+       - percent_change_dalys_2020_2030.csv
+       - percent_change_deaths_all_2020_2030.csv
+       - percent_change_dalys_all_2020_2030.csv
+       
+      
+sources: 
+  - R/figure_functions.R
+  - R/table_functions.R
+  
+resources: 
+  - country_names.csv
+  
+global_resources:
+  R/disease_palette.R: disease_palette.R
+
+depends: 
+  - vpd-covid-phase-I-impact-estimates:
+      id: latest
+      use: 
+        impact.rds: impact.rds
